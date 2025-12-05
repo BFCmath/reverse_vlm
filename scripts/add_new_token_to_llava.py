@@ -33,16 +33,14 @@ if __name__ == "__main__":
     else:
         print("No new tokens to add.")
 
-    # Fix generation_config if it exists and has invalid settings
-    if hasattr(model, 'generation_config') and model.generation_config is not None:
-        gen_config = model.generation_config
-        # If do_sample is False, remove temperature and top_p to avoid validation errors
-        if hasattr(gen_config, 'do_sample') and not gen_config.do_sample:
-            if hasattr(gen_config, 'temperature'):
-                gen_config.temperature = None
-            if hasattr(gen_config, 'top_p'):
-                gen_config.top_p = None
-            print("Fixed generation_config to resolve validation issues.")
+    # Fix for generation config validation error
+    # The model has temperature/top_p set but do_sample=False, which causes validation error in newer transformers
+    if hasattr(model, "generation_config"):
+        if model.generation_config.do_sample is False:
+            if (getattr(model.generation_config, "temperature", None) is not None and model.generation_config.temperature != 1.0) or \
+               (getattr(model.generation_config, "top_p", None) is not None and model.generation_config.top_p != 1.0):
+                print("Adjusting generation_config: Setting do_sample=True because temperature/top_p are set.")
+                model.generation_config.do_sample = True
 
     # Save the updated tokenizer and model to a directory
     tokenizer.save_pretrained(save_directory)

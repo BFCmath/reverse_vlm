@@ -1,12 +1,12 @@
 import os
 import argparse
-from transformers import AutoProcessor, Qwen2_5_VLForConditionalGeneration
+from transformers import AutoTokenizer, AutoModelForCausalLM
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model-name", type=str, default="Qwen/Qwen2.5-VL-3B-Instruct", help="Name of the model to update")
-    parser.add_argument("--output-dir", type=str, default="./updated_qwen25_vlm_3b_new", help="Directory to save the updated model")
+    parser.add_argument("--model-name", type=str, default="lmsys/vicuna-7b-v1.5", help="Name of the model to update")
+    parser.add_argument("--output-dir", type=str, default="./updated_model", help="Directory to save the updated model")
     args = parser.parse_args()
     # Specify the model name
     model_name = args.model_name
@@ -14,9 +14,8 @@ if __name__ == "__main__":
     os.makedirs(save_directory, exist_ok=True)
 
     # Load the pre-trained tokenizer and model
-    processor = AutoProcessor.from_pretrained(model_name)
-    tokenizer = processor.tokenizer
-    model = Qwen2_5_VLForConditionalGeneration.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForCausalLM.from_pretrained(model_name)
 
     # Define new tokens to be added
     new_tokens = ["<SPAN>", "</CN>", "</UN>"]
@@ -33,22 +32,8 @@ if __name__ == "__main__":
         print(f"Added {len(tokens_to_add)} tokens to the tokenizer and resized model embeddings.")
     else:
         print("No new tokens to add.")
-    token_ids = tokenizer.convert_tokens_to_ids(new_tokens)
-    for token, token_id in zip(new_tokens, token_ids):
-        print(f"Token: {token}, ID: {token_id}")
-    
-    # Fix generation_config if it exists and has invalid settings
-    if hasattr(model, 'generation_config') and model.generation_config is not None:
-        gen_config = model.generation_config
-        # If do_sample is False, remove temperature and top_p to avoid validation errors
-        if hasattr(gen_config, 'do_sample') and not gen_config.do_sample:
-            if hasattr(gen_config, 'temperature'):
-                gen_config.temperature = None
-            if hasattr(gen_config, 'top_p'):
-                gen_config.top_p = None
-            print("Fixed generation_config to resolve validation issues.")
-    
+
     # Save the updated tokenizer and model to a directory
-    processor.save_pretrained(save_directory)
+    tokenizer.save_pretrained(save_directory)
     model.save_pretrained(save_directory)
-    print(f"Saved updated processor and model to {save_directory}")
+    print(f"Updated tokenizer and model saved to {save_directory}.")

@@ -38,3 +38,8 @@ serve_images/
 
 # Dataset
 playground*
+
+# Model
+vicuna*
+missing_images_paths.txt
+updated_model/*
