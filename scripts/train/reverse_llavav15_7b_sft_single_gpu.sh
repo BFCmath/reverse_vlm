@@ -2,9 +2,9 @@
 # Single GPU training script for LLaVA-v1.5-7B
 # Adjusted settings for training on 1 GPU instead of 8
 
-LLM_PATH="./vicuna1.5_7b_with_new_tokens"   # path to the LLM checkpoint
+LLM_PATH="./updated_model"   # path to the LLM checkpoint
 MODE="llava_v15"                          # mode to run the script
-RUN_NAME="reverse_v15_7b_single_gpu"  # name of the run
+RUN_NAME="reverse_v15_7b_single_gpu_small"  # name of the run
 DATA_PATH="./final_dataset_train.json"  # path to the training data
 EVAL_DATA_PATH="./final_dataset_eval.json"  # path to the eval data
 PROJECTOR_PATH="checkpoints/llava_v15_pretraining/mm_projector.bin"  # path to the projector
@@ -51,7 +51,7 @@ deepspeed --include $GPU_SETTINGS --master_port=$MASTER_PORT llava/train/train_m
     --group_by_modality_length True \
     --bf16 True \
     --output_dir checkpoints/$RUN_NAME \
-    --num_train_epochs 0.02 \
+    --num_train_epochs 0.0001 \
     --per_device_train_batch_size 8 \
     --per_device_eval_batch_size 8 \
     --gradient_accumulation_steps 8 \

@@ -1,6 +1,6 @@
 #!/bin/bash
 # LLaVA-v1.5-7B
-CKPT_PATH="tsunghanwu/reverse_llava_v15"
+CKPT_PATH="checkpoints/reverse_llava_v15_7b_single_gpu_small_merged"
 MODE="llava_v15"
 
 # LLaVA-MORE (LLaVA w/ Llama-3.1-Instruct-8B)
