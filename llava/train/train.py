@@ -75,6 +75,8 @@ class ModelArguments:
 class DataArguments:
     data_path: str = field(default=None,
                            metadata={"help": "Path to the training data."})
+    eval_data_path: str = field(default=None,
+                           metadata={"help": "Path to the evaluation data."})
     lazy_preprocess: bool = False
     is_multimodal: bool = False
     image_folder: Optional[str] = field(default=None)
@@ -955,7 +957,18 @@ class LazySupervisedDataset(Dataset):
             image_file = self.list_data_dict[i]['image']
             image_folder = self.data_args.image_folder
             processor = self.data_args.image_processor
-            image = Image.open(os.path.join(image_folder, image_file)).convert('RGB')
+            image_path = os.path.join(image_folder, image_file)
+            
+            # Handle missing images gracefully
+            try:
+                image = Image.open(image_path).convert('RGB')
+            except (FileNotFoundError, OSError) as e:
+                # Log warning and return a random valid sample instead
+                import random
+                import logging
+                logging.warning(f"Image not found or corrupted: {image_path}. Skipping sample {i}.")
+                # Return a random different sample
+                return self.__getitem__(random.randint(0, len(self.list_data_dict) - 1))
             if self.data_args.image_aspect_ratio == 'pad':
                 def expand2square(pil_img, background_color):
                     width, height = pil_img.size
@@ -1056,8 +1069,16 @@ def make_supervised_data_module(tokenizer: transformers.PreTrainedTokenizer,
                                 data_path=data_args.data_path,
                                 data_args=data_args, model_args=model_args)
     data_collator = DataCollatorForSupervisedDataset(tokenizer=tokenizer)
+    
+    # Create eval dataset if eval_data_path is provided
+    eval_dataset = None
+    if data_args.eval_data_path is not None:
+        eval_dataset = LazySupervisedDataset(tokenizer=tokenizer,
+                                    data_path=data_args.eval_data_path,
+                                    data_args=data_args, model_args=model_args)
+    
     return dict(train_dataset=train_dataset,
-                eval_dataset=None,
+                eval_dataset=eval_dataset,
                 data_collator=data_collator)
 
 
